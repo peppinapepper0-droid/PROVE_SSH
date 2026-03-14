@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+
+body{
+    font-family: Arial;
+}
+
+.calendario{
+    width: 600px;
+    border:3px solid black;
+    border-radius:10px;
+    overflow:hidden;
+}
+
+.header{
+    display:grid;
+    grid-template-columns:60px repeat(6,1fr);
+    background:#9fd3a6;
+    font-weight:bold;
+}
+
+.header div{
+    border:2px solid black;
+    text-align:center;
+    padding:5px;
+}
+
+.griglia{
+    position:relative;
+    display:grid;
+    grid-template-columns:60px repeat(6,1fr);
+}
+
+.cella{
+    border:1px solid black;
+    height:40px;
+}
+
+.orario{
+    font-size:12px;
+    text-align:center;
+    border:1px solid black;
+}
+
+.evento{
+    position:absolute;
+    background:#6bc16b;
+    border-radius:6px;
+    padding:5px;
+    font-size:12px;
+    text-align:center;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>ORARIO SETTIMANALE</h2>
+
+<div class="calendario">
+
+<div class="header">
+<div></div>
+<div>LUN</div>
+<div>MAR</div>
+<div>MER</div>
+<div>GIO</div>
+<div>VEN</div>
+<div>SAB</div>
+</div>
+
+<div class="griglia" id="griglia">
+
+<script>
+
+// crea righe orarie
+for(let h=8; h<=17; h++){
+
+    let ora = document.createElement("div")
+    ora.className="orario"
+    ora.innerText = (h<10?"0":"")+h+":00"
+    document.getElementById("griglia").appendChild(ora)
+
+    for(let d=0; d<6; d++){
+        let cell = document.createElement("div")
+        cell.className="cella"
+        document.getElementById("griglia").appendChild(cell)
+    }
+}
+
+// funzione per aggiungere evento
+function aggiungiEvento(giorno, start, end, testo){
+
+    const grid = document.getElementById("griglia")
+
+    let top = (start-8)*40
+    let height = (end-start)*40
+    let left = 60 + giorno*( (600-60)/6 )
+
+    let ev = document.createElement("div")
+    ev.className="evento"
+    ev.style.top = top+"px"
+    ev.style.left = left+"px"
+    ev.style.width = ((600-60)/6 - 10)+"px"
+    ev.style.height = height+"px"
+
+    ev.innerText = testo
+
+    grid.appendChild(ev)
+}
+
+// esempio evento
+aggiungiEvento(0,8,10.5,"8:00-10:30")
+
+</script>
+
+</div>
+
+</div>
+
+</body>
+</html>
