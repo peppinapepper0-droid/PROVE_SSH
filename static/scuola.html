@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCTO — Scuola</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.section-nav { display:flex; gap:6px; margin-bottom:24px; flex-wrap:wrap; }
+.section-btn { padding:8px 16px; border:1.5px solid #ccc; border-radius:20px; background:var(--white); cursor:pointer; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:500; transition:all 0.15s; color:var(--gray); }
+.section-btn.active { background:var(--pink); border-color:var(--black); color:var(--black); box-shadow:var(--shadow-sm); }
+.section { display:none; }
+.section.active { display:block; }
+
+.assign-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px, 1fr)); gap:16px; }
+.ente-assign-card { background:var(--white); border:1.5px solid #ddd; border-radius:var(--radius); overflow:hidden; }
+.ente-assign-card .header { background:var(--pink-light); padding:12px 16px; font-weight:500; font-size:15px; border-bottom:1px solid var(--pink); display:flex; justify-content:space-between; align-items:center; }
+.ente-assign-card .student-list { padding:12px 16px; min-height:80px; }
+.student-item { display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--gray-light); font-size:13px; }
+.student-item:last-child { border-bottom:none; }
+.dropper { padding:12px 16px; background:var(--cream); border-top:1px solid #ddd; }
+
+.student-pool { background:var(--white); border:1.5px solid var(--black); border-radius:var(--radius); padding:16px; margin-bottom:20px; }
+.pool-student { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; background:var(--gray-light); border:1px solid #ccc; border-radius:20px; font-size:13px; margin:3px; cursor:pointer; transition:all 0.15s; }
+.pool-student:hover { background:var(--pink-light); border-color:var(--pink); }
+.pool-student.selected { background:var(--pink); border-color:var(--black); font-weight:500; }
+
+.chart-wrap { position:relative; height:260px; }
+.charts-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media(max-width:700px){ .charts-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">✦ PCTO</a>
+  <div class="navbar-links">
+    <a href="/scuola" class="active">🏫 Scuola</a>
+    <a href="/" onclick="logout()">Esci</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <h1 class="page-title">Pannello Scuola</h1>
+
+  <div class="section-nav">
+    <button class="section-btn active" onclick="showSection('assegnazione', this)">📋 Assegnazione Enti</button>
+    <button class="section-btn" onclick="showSection('grafici', this)">📊 Grafici</button>
+  </div>
+
+  <!-- ASSEGNAZIONE -->
+  <div id="sec-assegnazione" class="section active">
+    <div class="card" style="margin-bottom:20px;">
+      <div class="card-title">Assegna Studente</div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+        <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+          <label>Email studente</label>
+          <input type="email" id="email-assign" placeholder="studente@scuola.it">
+        </div>
+        <div class="form-group" style="margin:0;flex:1;min-width:200px;">
+          <label>Ente</label>
+          <select id="entity-assign"><option value="">— Seleziona ente —</option></select>
+        </div>
+        <button class="btn" onclick="assignStudent()">✓ Assegna</button>
+      </div>
+    </div>
+
+    <h2 style="font-family:'Playfair Display',serif;font-size:20px;margin-bottom:14px;">Assegnazioni per Ente</h2>
+    <div id="assign-grid" class="assign-grid">
+      <div class="loading"><div class="spinner"></div>Caricamento...</div>
+    </div>
+  </div>
+
+  <!-- GRAFICI -->
+  <div id="sec-grafici" class="section">
+    <div class="charts-grid">
+      <div class="card">
+        <div class="card-title">Distribuzione Studenti</div>
+        <div class="chart-wrap"><canvas id="chart1"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Studenti per Ente (Torta)</div>
+        <div class="chart-wrap"><canvas id="chart2"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Punteggi Questionari</div>
+        <div class="chart-wrap"><canvas id="chart3"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">
+          Soddisfazione per Periodo
+          <select id="period-sel" style="margin-left:10px;font-size:13px;padding:4px 8px;" onchange="loadQStats()">
+            <option value="all">Tutto</option>
+            <option value="month">Ultimo Mese</option>
+            <option value="week">Ultima Settimana</option>
+          </select>
+        </div>
+        <div class="chart-wrap"><canvas id="chart4"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = 'http://127.0.0.1:8000';
+let allEntities = [], allStudents = [];
+const charts = {};
+
+function logout() { localStorage.removeItem('pcto_email'); localStorage.removeItem('pcto_role'); }
+
+function showSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'grafici') loadAllCharts();
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+async function loadData() {
+  try {
+    const [eRes, sRes] = await Promise.all([fetch(`${BASE}/entities`), fetch(`${BASE}/students`)]);
+    allEntities = await eRes.json();
+    allStudents = await sRes.json();
+    renderEntitySelect();
+    renderAssignGrid();
+  } catch(e) {
+    document.getElementById('assign-grid').innerHTML = '<p style="color:var(--gray);font-size:14px;padding:20px;">Errore caricamento dati. Assicurati che il server sia avviato.</p>';
+  }
+}
+
+function renderEntitySelect() {
+  const sel = document.getElementById('entity-assign');
+  sel.innerHTML = '<option value="">— Seleziona ente —</option>';
+  allEntities.forEach(e => sel.add(new Option(e.name, e.name)));
+}
+
+function renderAssignGrid() {
+  const grid = document.getElementById('assign-grid');
+  if (!allEntities.length) { grid.innerHTML = '<p style="color:var(--gray);font-size:14px;">Nessun ente disponibile.</p>'; return; }
+  grid.innerHTML = allEntities.map(ente => {
+    const assigned = allStudents.filter(s => s.assigned_entity === ente.name);
+    const capacity = ente.capacity || '?';
+    const pct = ente.capacity ? Math.round(assigned.length / ente.capacity * 100) : null;
+    return `
+      <div class="ente-assign-card">
+        <div class="header">
+          <span>${ente.name}</span>
+          <span style="font-size:12px;font-weight:400;color:#777;">${assigned.length}/${capacity}</span>
+        </div>
+        ${pct !== null ? `<div style="height:4px;background:#eee;"><div style="height:4px;background:${pct>90?'#E57373':'#4CAF7D'};width:${Math.min(pct,100)}%;transition:width 0.3s;"></div></div>` : ''}
+        <div class="student-list">
+          ${assigned.length ? assigned.map(s => `
+            <div class="student-item">
+              <span>${s.email.split('@')[0]}<br><small style="color:var(--gray);font-size:11px;">${s.email}</small></span>
+              <button class="btn btn-sm btn-danger" onclick="removeAssign('${s.email}')">✕</button>
+            </div>`).join('') : '<p style="font-size:13px;color:var(--gray);">Nessuno studente</p>'}
+        </div>
+        <div class="dropper">
+          <select id="drop-${ente.name.replace(/\s/g,'_')}" style="font-size:12px;padding:5px 8px;margin-bottom:6px;">
+            <option value="">Aggiungi studente...</option>
+            ${allStudents.filter(s => !s.assigned_entity).map(s => `<option value="${s.email}">${s.email}</option>`).join('')}
+          </select>
+          <button class="btn btn-sm" style="width:100%;justify-content:center;" onclick="assignFromDrop('${ente.name}')">+ Aggiungi</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+async function assignStudent() {
+  const email = document.getElementById('email-assign').value.trim();
+  const entity = document.getElementById('entity-assign').value;
+  if (!email || !entity) { showToast('Inserisci email e ente', 'error'); return; }
+  await doAssign(email, entity);
+}
+
+async function assignFromDrop(enteName) {
+  const sel = document.getElementById('drop-' + enteName.replace(/\s/g,'_'));
+  const email = sel.value;
+  if (!email) return;
+  await doAssign(email, enteName);
+}
+
+async function doAssign(email, entity) {
+  try {
+    await fetch(`${BASE}/assign`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({email, entity}) });
+    showToast(`${email} → ${entity}`, 'success');
+    await loadData();
+  } catch(e) { showToast('Errore nell\'assegnazione', 'error'); }
+}
+
+async function removeAssign(email) {
+  if (!confirm(`Rimuovere l'assegnazione di ${email}?`)) return;
+  await doAssign(email, '');
+}
+
+async function loadAllCharts() {
+  try {
+    const [statsRes, qRes] = await Promise.all([fetch(`${BASE}/stats`), fetch(`${BASE}/questionnaire_stats`)]);
+    const stats = await statsRes.json();
+    const qStats = await qRes.json();
+
+    if (charts.c1) charts.c1.destroy();
+    charts.c1 = new Chart(document.getElementById('chart1'), {
+      type: 'bar',
+      data: { labels: stats.labels, datasets: [{ label: 'Studenti', data: stats.values, backgroundColor: '#FFB5A7', borderColor: '#1a1a1a', borderWidth: 1.5 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+
+    if (charts.c2) charts.c2.destroy();
+    const colors = ['#FFB5A7','#A8DADC','#95D5B2','#CDB4DB','#FFDDD2','#B7E4C7'];
+    charts.c2 = new Chart(document.getElementById('chart2'), {
+      type: 'doughnut',
+      data: { labels: stats.labels, datasets: [{ data: stats.values, backgroundColor: colors, borderColor: '#1a1a1a', borderWidth: 1.5 }] },
+      options: { responsive: true, maintainAspectRatio: false }
+    });
+
+    if (charts.c3) charts.c3.destroy();
+    charts.c3 = new Chart(document.getElementById('chart3'), {
+      type: 'bar',
+      data: { labels: qStats.labels, datasets: [{ label: 'Media', data: qStats.values, backgroundColor: qStats.values.map(v => v >= 70 ? '#4CAF7D' : '#E57373'), borderColor: '#1a1a1a', borderWidth: 1.5 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+
+    loadQStats();
+  } catch(e) {}
+}
+
+async function loadQStats() {
+  try {
+    const res = await fetch(`${BASE}/questionnaire_stats`);
+    const data = await res.json();
+    if (charts.c4) charts.c4.destroy();
+    charts.c4 = new Chart(document.getElementById('chart4'), {
+      type: 'bar',
+      data: { labels: ['Aspetti Positivi', 'Aspetti Negativi'], datasets: data.labels.map((label, i) => ({
+        label,
+        data: [data.values[i], 100 - data.values[i]],
+        backgroundColor: ['#4CAF7D', '#E57373'],
+        borderColor: '#1a1a1a',
+        borderWidth: 1,
+      }))},
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } } }
+    });
+  } catch(e) {}
+}
+
+loadData();
+</script>
+</body>
+</html>

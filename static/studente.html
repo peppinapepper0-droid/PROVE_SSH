@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PCTO — Studente</title>
+<link rel="stylesheet" href="/static/style.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.section-nav {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+.section-btn {
+  padding: 8px 16px;
+  border: 1.5px solid #ccc;
+  border-radius: 20px;
+  background: var(--white);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s;
+  color: var(--gray);
+}
+.section-btn.active {
+  background: var(--pink);
+  border-color: var(--black);
+  color: var(--black);
+  box-shadow: var(--shadow-sm);
+}
+.section { display: none; }
+.section.active { display: block; }
+
+.ente-card {
+  background: var(--white);
+  border: 1.5px solid #ddd;
+  border-radius: var(--radius);
+  padding: 16px;
+  transition: all 0.15s;
+  cursor: pointer;
+}
+.ente-card:hover {
+  border-color: var(--black);
+  box-shadow: var(--shadow-sm);
+  transform: translate(-1px, -1px);
+}
+.ente-card h3 { font-size: 16px; font-weight: 500; margin-bottom: 6px; }
+.ente-card .sector-badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 12px;
+  background: var(--pink-light);
+  color: #c2514a;
+  border: 1px solid var(--pink);
+  margin-bottom: 8px;
+}
+.ente-card .meta { font-size: 12px; color: var(--gray); line-height: 1.8; }
+
+.assigned-box {
+  background: var(--pink-light);
+  border: 2px solid var(--pink);
+  border-radius: var(--radius);
+  padding: 20px;
+  text-align: center;
+}
+.assigned-box h2 {
+  font-family: 'Playfair Display', serif;
+  font-size: 28px;
+  margin-bottom: 6px;
+}
+.assigned-box .status { font-size: 13px; color: #c2514a; font-weight: 500; }
+
+.schedule-grid {
+  display: grid;
+  grid-template-columns: 60px repeat(6, 1fr);
+  gap: 2px;
+  font-size: 12px;
+}
+.sch-header {
+  background: var(--pink-light);
+  padding: 8px 4px;
+  text-align: center;
+  font-weight: 500;
+  font-size: 11px;
+  border: 1px solid var(--black);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.sch-time {
+  padding: 6px 4px;
+  text-align: right;
+  color: var(--gray);
+  font-size: 11px;
+  border-right: 1px solid #e0dbd5;
+  border-bottom: 1px solid #e0dbd5;
+}
+.sch-cell {
+  border: 1px solid #e0dbd5;
+  min-height: 28px;
+  position: relative;
+}
+.sch-block {
+  background: var(--green);
+  color: white;
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  text-align: center;
+}
+
+.contatti-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 16px;
+}
+.contact-box {
+  background: var(--gray-light);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+}
+.contact-box h4 { font-size: 13px; font-weight: 500; margin-bottom: 8px; color: var(--gray); text-transform: uppercase; letter-spacing: 0.5px; }
+.contact-row { display: flex; align-items: center; gap: 8px; font-size: 14px; margin-bottom: 6px; }
+
+.pref-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.pref-label {
+  font-size: 13px;
+  font-weight: 500;
+  min-width: 70px;
+  color: var(--gray);
+}
+.pref-row select { flex: 1; min-width: 200px; }
+
+.chart-wrap { position: relative; height: 260px; }
+</style>
+</head>
+<body>
+<nav class="navbar">
+  <a class="navbar-brand" href="/">✦ PCTO</a>
+  <div class="navbar-links">
+    <a href="/studente" class="active">🎓 Studente</a>
+    <a href="/" onclick="logout()">Esci</a>
+  </div>
+</nav>
+
+<div class="main-content">
+  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; flex-wrap:wrap; gap:10px;">
+    <h1 class="page-title" style="margin-bottom:0;">Dashboard Studente</h1>
+    <span id="user-email" style="font-size:13px; color:var(--gray);"></span>
+  </div>
+
+  <div class="section-nav">
+    <button class="section-btn active" onclick="showSection('scelta', this)">🏢 Scelta Enti</button>
+    <button class="section-btn" onclick="showSection('assegnato', this)">📋 Ente Assegnato</button>
+    <button class="section-btn" onclick="showSection('questionario', this)">📝 Questionario</button>
+    <button class="section-btn" onclick="showSection('grafici', this)">📊 Grafici</button>
+    <button class="section-btn" onclick="showSection('messaggi', this)">💬 Messaggi</button>
+  </div>
+
+  <!-- SCELTA ENTI -->
+  <div id="sec-scelta" class="section active">
+    <div class="grid-2" style="margin-bottom:24px;">
+      <div class="card">
+        <div class="card-title">Le tue preferenze</div>
+        <p style="font-size:13px;color:var(--gray);margin-bottom:14px;">Seleziona 3 enti in ordine di preferenza</p>
+        <div class="pref-row">
+          <span class="pref-label">1° scelta</span>
+          <select id="c1"><option value="">— Seleziona —</option></select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-label">2° scelta</span>
+          <select id="c2"><option value="">— Seleziona —</option></select>
+        </div>
+        <div class="pref-row">
+          <span class="pref-label">3° scelta</span>
+          <select id="c3"><option value="">— Seleziona —</option></select>
+        </div>
+        <button class="btn" style="margin-top:6px;" onclick="savePreferences()">💾 Salva preferenze</button>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Come funziona</div>
+        <div style="font-size:14px; line-height:1.9; color:#555;">
+          <p>① Consulta la lista degli enti disponibili a destra</p>
+          <p>② Seleziona i 3 enti che preferisci</p>
+          <p>③ Clicca "Salva preferenze"</p>
+          <p>④ Attendi l'assegnazione dalla scuola</p>
+        </div>
+      </div>
+    </div>
+
+    <h2 style="font-family:'Playfair Display',serif; font-size:20px; margin-bottom:14px;">Lista Enti Disponibili</h2>
+    <div id="entities-grid" class="grid-3">
+      <div class="loading"><div class="spinner"></div>Caricamento enti...</div>
+    </div>
+  </div>
+
+  <!-- ENTE ASSEGNATO -->
+  <div id="sec-assegnato" class="section">
+    <div id="assegnato-content">
+      <div class="loading"><div class="spinner"></div>Caricamento...</div>
+    </div>
+  </div>
+
+  <!-- QUESTIONARIO -->
+  <div id="sec-questionario" class="section">
+    <div class="card" style="max-width:600px;">
+      <div class="card-title">📝 Questionario PCTO</div>
+      <div class="alert alert-info">
+        Compila il questionario di valutazione dell'esperienza PCTO tramite il link sottostante.
+      </div>
+      <p style="font-size:14px; color:var(--gray); margin-bottom:20px;">
+        Il questionario raccoglie il tuo feedback sull'esperienza presso l'ente assegnato.
+        La compilazione è obbligatoria al termine del percorso.
+      </p>
+      <a href="#" class="btn" onclick="alert('Inserire qui il link al questionario')">
+        📋 Apri Questionario →
+      </a>
+    </div>
+  </div>
+
+  <!-- GRAFICI -->
+  <div id="sec-grafici" class="section">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Studenti per Ente</div>
+        <div class="chart-wrap"><canvas id="chart1"></canvas></div>
+        <button class="btn btn-sm" style="margin-top:12px;" onclick="loadStats()">Aggiorna</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Punteggi Questionari</div>
+        <div class="chart-wrap"><canvas id="chart2"></canvas></div>
+        <button class="btn btn-sm" style="margin-top:12px;" onclick="loadQStats()">Aggiorna</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MESSAGGI -->
+  <div id="sec-messaggi" class="section">
+    <div class="card" style="max-width:600px;">
+      <div class="card-title">💬 Messaggi & Avvisi</div>
+      <div class="empty-state">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        <p>Nessun messaggio al momento</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = 'http://127.0.0.1:8000';
+let currentEmail = localStorage.getItem('pcto_email') || '';
+let allEntities = [];
+let chart1Instance = null, chart2Instance = null;
+
+document.getElementById('user-email').textContent = currentEmail;
+
+function logout() { localStorage.removeItem('pcto_email'); localStorage.removeItem('pcto_role'); }
+
+function showSection(name, btn) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('sec-' + name).classList.add('active');
+  btn.classList.add('active');
+  if (name === 'assegnato') loadAssignment();
+  if (name === 'grafici') { loadStats(); loadQStats(); }
+}
+
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show ' + type;
+  setTimeout(() => t.className = 'toast', 2800);
+}
+
+async function loadEntities() {
+  try {
+    const res = await fetch(`${BASE}/entities`);
+    allEntities = await res.json();
+    renderEntityCards();
+    populateSelects();
+  } catch(e) {
+    document.getElementById('entities-grid').innerHTML = '<p style="color:var(--gray);font-size:14px;">Impossibile caricare gli enti. Assicurati che il server sia avviato.</p>';
+  }
+}
+
+function renderEntityCards() {
+  const grid = document.getElementById('entities-grid');
+  if (!allEntities.length) {
+    grid.innerHTML = '<div class="empty-state"><p>Nessun ente disponibile</p></div>';
+    return;
+  }
+  grid.innerHTML = allEntities.map(e => `
+    <div class="ente-card" onclick="showEnteDetail('${e.name}')">
+      <h3>${e.name}</h3>
+      ${e.sector ? `<span class="sector-badge">${e.sector}</span>` : ''}
+      <div class="meta">
+        ${e.address ? `📍 ${e.address}<br>` : ''}
+        ${e.site ? `🌐 ${e.site}<br>` : ''}
+        ${e.capacity ? `👥 Capacità: ${e.capacity} studenti` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function showEnteDetail(name) {
+  const e = allEntities.find(x => x.name === name);
+  if (!e) return;
+  const days = ['lun','mar','mer','gio','ven','sab'];
+  const dayNames = ['Lun','Mar','Mer','Gio','Ven','Sab'];
+  let scheduleHtml = '';
+  if (e.schedule) {
+    scheduleHtml = `<div style="margin-top:12px;">
+      <strong style="font-size:13px;">Orario settimanale:</strong>
+      <table style="width:100%;margin-top:8px;font-size:12px;border-collapse:collapse;">
+        <tr>${dayNames.map(d => `<th style="background:var(--pink-light);padding:5px;border:1px solid var(--black);text-align:center;">${d}</th>`).join('')}</tr>
+        <tr>${days.map(d => {
+          const slots = e.schedule[d] || [];
+          const text = slots.map(s => `${s.start||''}-${s.end||''}`).join('<br>') || '—';
+          return `<td style="padding:6px;border:1px solid #e0dbd5;text-align:center;font-size:11px;">${text}</td>`;
+        }).join('')}</tr>
+      </table>
+    </div>`;
+  }
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;';
+  overlay.innerHTML = `
+    <div style="background:var(--white);border-radius:var(--radius);border:2px solid var(--black);padding:28px;max-width:520px;width:100%;max-height:80vh;overflow-y:auto;box-shadow:5px 5px 0 var(--black);">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <h2 style="font-family:'Playfair Display',serif;font-size:24px;">${e.name}</h2>
+        <button onclick="this.closest('.overlay-modal').remove()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--gray);">✕</button>
+      </div>
+      ${e.sector ? `<span class="badge badge-pink">${e.sector}</span><br><br>` : ''}
+      <table style="width:100%;font-size:14px;border-collapse:collapse;">
+        ${e.address ? `<tr><td style="padding:5px 0;color:var(--gray);width:120px;">📍 Indirizzo</td><td style="padding:5px 0;">${e.address}</td></tr>` : ''}
+        ${e.contact ? `<tr><td style="padding:5px 0;color:var(--gray);">✉️ Email</td><td style="padding:5px 0;"><a href="mailto:${e.contact}" style="color:#1565C0;">${e.contact}</a></td></tr>` : ''}
+        ${e.phone ? `<tr><td style="padding:5px 0;color:var(--gray);">📞 Telefono</td><td style="padding:5px 0;">${e.phone}</td></tr>` : ''}
+        ${e.site ? `<tr><td style="padding:5px 0;color:var(--gray);">🌐 Sito</td><td style="padding:5px 0;"><a href="https://${e.site}" target="_blank" style="color:#1565C0;">${e.site}</a></td></tr>` : ''}
+        ${e.capacity ? `<tr><td style="padding:5px 0;color:var(--gray);">👥 Capacità</td><td style="padding:5px 0;">${e.capacity} studenti</td></tr>` : ''}
+        ${e.tutor ? `<tr><td style="padding:5px 0;color:var(--gray);">👤 Tutor</td><td style="padding:5px 0;">${e.tutor} ${e.tutor_phone ? '— '+e.tutor_phone : ''}</td></tr>` : ''}
+      </table>
+      ${scheduleHtml}
+      <button class="btn" style="margin-top:20px;width:100%;justify-content:center;" onclick="selectEntity('${e.name}'); this.closest('.overlay-modal').remove();">
+        ✓ Seleziona come preferenza
+      </button>
+    </div>`;
+  overlay.classList.add('overlay-modal');
+  overlay.addEventListener('click', ev => { if (ev.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+function selectEntity(name) {
+  const c1 = document.getElementById('c1');
+  if (c1.value === '') c1.value = name;
+  else if (document.getElementById('c2').value === '') document.getElementById('c2').value = name;
+  else document.getElementById('c3').value = name;
+  showToast(`"${name}" aggiunto alle preferenze`, 'success');
+}
+
+function populateSelects() {
+  ['c1','c2','c3'].forEach(id => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = '<option value="">— Seleziona —</option>';
+    allEntities.forEach(e => sel.add(new Option(e.name, e.name)));
+    if (current) sel.value = current;
+  });
+}
+
+async function savePreferences() {
+  const choices = [document.getElementById('c1').value, document.getElementById('c2').value, document.getElementById('c3').value].filter(Boolean);
+  if (choices.length < 1) { showToast('Seleziona almeno un ente', 'error'); return; }
+  try {
+    await fetch(`${BASE}/preferences`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({email: currentEmail, choices})
+    });
+    showToast('Preferenze salvate!', 'success');
+  } catch(e) { showToast('Errore nel salvataggio', 'error'); }
+}
+
+async function loadAssignment() {
+  const el = document.getElementById('assegnato-content');
+  if (!currentEmail) { el.innerHTML = '<p style="color:var(--gray);">Effettua prima il login.</p>'; return; }
+  try {
+    const res = await fetch(`${BASE}/assignment/${encodeURIComponent(currentEmail)}`);
+    const data = await res.json();
+    if (data.entity) {
+      const ente = allEntities.find(e => e.name === data.entity) || {name: data.entity};
+      const days = ['lun','mar','mer','gio','ven','sab'];
+      const dayNames = ['Lunedì','Martedì','Mercoledì','Giovedì','Venerdì','Sabato'];
+      let schedHtml = '';
+      if (ente.schedule) {
+        schedHtml = `
+          <table class="schedule-table" style="margin-top:12px;">
+            <tr>${dayNames.map(d => `<th>${d}</th>`).join('')}</tr>
+            <tr>${days.map(d => {
+              const slots = (ente.schedule && ente.schedule[d]) || [];
+              return `<td>${slots.map(s=>`<div class="schedule-block">${s.start||''}-${s.end||''}</div>`).join('') || ''}</td>`;
+            }).join('')}</tr>
+          </table>`;
+      }
+      el.innerHTML = `
+        <div class="assigned-box" style="margin-bottom:20px;">
+          <div class="status">✓ Ente assegnato</div>
+          <h2>${data.entity}</h2>
+          ${ente.sector ? `<span class="badge badge-pink">${ente.sector}</span>` : ''}
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title">Orario Settimanale</div>
+            ${schedHtml || '<p style="font-size:14px;color:var(--gray);">Orario non disponibile</p>'}
+          </div>
+          <div class="card">
+            <div class="card-title">Contatti</div>
+            <div class="contatti-grid" style="grid-template-columns:1fr;">
+              <div class="contact-box">
+                <h4>Tutor Ente</h4>
+                <div class="contact-row">👤 ${ente.tutor || 'N/D'}</div>
+                ${ente.tutor_phone ? `<div class="contact-row">📞 ${ente.tutor_phone}</div>` : ''}
+                ${ente.contact ? `<div class="contact-row">✉️ ${ente.contact}</div>` : ''}
+              </div>
+              <div class="contact-box" style="margin-top:10px;">
+                <h4>Referente Scuola</h4>
+                <div class="contact-row">👤 ${ente.school_ref || 'N/D'}</div>
+                ${ente.school_ref_phone ? `<div class="contact-row">📞 ${ente.school_ref_phone}</div>` : ''}
+              </div>
+            </div>
+          </div>
+        </div>`;
+    } else {
+      el.innerHTML = `
+        <div class="card" style="max-width:500px;text-align:center;">
+          <div style="font-size:48px;margin-bottom:12px;">⏳</div>
+          <h3 style="font-family:'Playfair Display',serif;margin-bottom:8px;">In attesa di assegnazione</h3>
+          <p style="font-size:14px;color:var(--gray);">La scuola non ha ancora assegnato un ente al tuo profilo.<br>Riceverai una notifica quando l'assegnazione sarà completata.</p>
+        </div>`;
+    }
+  } catch(e) { el.innerHTML = '<p style="color:var(--gray);font-size:14px;">Errore nel caricamento.</p>'; }
+}
+
+let charts = {};
+async function loadStats() {
+  try {
+    const res = await fetch(`${BASE}/stats`);
+    const data = await res.json();
+    if (charts.c1) charts.c1.destroy();
+    charts.c1 = new Chart(document.getElementById('chart1'), {
+      type: 'bar',
+      data: { labels: data.labels, datasets: [{ label: 'Studenti', data: data.values, backgroundColor: '#FFB5A7', borderColor: '#1a1a1a', borderWidth: 1.5 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    });
+  } catch(e) {}
+}
+
+async function loadQStats() {
+  try {
+    const res = await fetch(`${BASE}/questionnaire_stats`);
+    const data = await res.json();
+    if (charts.c2) charts.c2.destroy();
+    charts.c2 = new Chart(document.getElementById('chart2'), {
+      type: 'bar',
+      data: { labels: data.labels, datasets: [{ label: 'Punteggio medio', data: data.values, backgroundColor: data.values.map(v => v >= 70 ? '#4CAF7D' : '#E57373'), borderColor: '#1a1a1a', borderWidth: 1.5 }] },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+    });
+  } catch(e) {}
+}
+
+loadEntities();
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+{
+  "theme": "light",
+  "archetype": "Archetype 3 (Pastel & Soft) mixed with Neo-Brutalist contrast",
+  "tone": "Approachable, Optimistic, Structured, Clear",
+  "colors": {
+    "background": "#FDFBF7",
+    "surface": "#FFFFFF",
+    "primary": "#FFB5A7",
+    "primary_hover": "#F9A08F",
+    "secondary": "#F8EDEB",
+    "secondary_hover": "#EEDDDA",
+    "text_main": "#1A1A1A",
+    "text_muted": "#6B7280",
+    "border": "#1A1A1A",
+    "success": "#D8F3DC",
+    "success_dark": "#40916C",
+    "error": "#FFD0D0",
+    "error_dark": "#D90429"
+  },
+  "typography": {
+    "headings_font": "Outfit",
+    "body_font": "DM Sans",
+    "heading_h1": "text-4xl sm:text-5xl tracking-tight font-bold text-[#1A1A1A]",
+    "heading_h2": "text-2xl sm:text-3xl tracking-tight font-semibold text-[#1A1A1A]",
+    "heading_h3": "text-xl font-medium text-[#1A1A1A]",
+    "body_text": "text-base leading-relaxed text-[#2C2C2C]",
+    "small_text": "text-sm tracking-wide text-[#6B7280] uppercase"
+  },
+  "layout_and_spacing": {
+    "philosophy": "Neo-Brutalist Soft: Mixes approachable pastel backgrounds with sharp, crisp 1px borders and hard block shadows for hierarchy without muddiness.",
+    "dashboard_grid": "grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6",
+    "bento_grid": "grid-cols-1 md:grid-cols-8 lg:grid-cols-12 gap-6",
+    "card_padding": "p-6",
+    "border_radius": "rounded-xl",
+    "shadows": {
+      "default": "shadow-[2px_2px_0px_#1A1A1A]",
+      "hover": "hover:shadow-[4px_4px_0px_#1A1A1A] hover:-translate-y-0.5 transition-all duration-200 ease-out",
+      "focus": "focus:ring-2 focus:ring-[#FFB5A7] focus:ring-offset-2"
+    }
+  },
+  "component_instructions": {
+    "buttons": "Primary buttons use bg-[#FFB5A7] with a solid 1px dark border and hard shadow. Hover state must deepen the color and extend the shadow. Secondary buttons use bg-white or bg-[#F8EDEB].",
+    "cards": "White background, rounded-xl, 1px solid border-[#1A1A1A], highly structured internal padding (p-6). No blurry box-shadows.",
+    "tables": "Shadcn tables but override default borders to be solid black/10 or solid #1A1A1A depending on emphasis. Header rows should use bg-[#F8EDEB] for subtle distinction.",
+    "modals": "Shadcn Dialog. Use glassmorphism backdrop (backdrop-blur-md bg-black/20) with a solid white content box with the hard shadow effect.",
+    "inputs": "Shadcn input/select components customized with 1px solid border-[#1A1A1A], rounded-lg, focus states using peach rings.",
+    "navigation": "Hamburger menu for mobile navigation. Desktop should feature a clean top navbar or side navigation (sticky). Active links highlighted with a peach background (#FFB5A7) and bold text."
+  },
+  "page_specifics": {
+    "login": "Split screen layout. Left side: soft peach pastel background with the 'login_illustration' vertically and horizontally centered. Right side: Clean white login form with 'Pre-loaded Credentials' info banner.",
+    "student_dashboard": "Bento grid layout. Top row: Welcome Banner (Hero bento spanning full width) + Selected Entities list (3 slots). Middle: Weekly Schedule Grid (detailed time table). Bottom: Quick access to the Questionnaire.",
+    "school_dashboard": "High-level overview. Top: KPI bento boxes (Total students, assigned, questionnaires completed). Middle: Satisfaction Charts (Recharts). Bottom: Student-Entity Assignment Grid.",
+    "admin_dashboard": "Data-heavy layout. Tabs at top for 'Manage Entities', 'Questionnaires', 'Students'. Includes a prominent 'Upload CSV' dropzone in the Students/Entities tabs.",
+    "entity_selection_modal": "Grid of available entities. Each card shows name, sector, capacity, and an 'Add' button. Must not allow more than 3 selections.",
+    "questionnaire": "Integrated multi-step or clean single-page form using Shadcn Forms. Success screen displays the pastel success colors and redirects to dashboard."
+  },
+  "media": {
+    "images": [
+      {
+        "category": "hero_background",
+        "url": "https://static.prod-images.emergentagent.com/jobs/21395b92-ae79-4ad7-90c0-043acf4bb43b/images/e4a08edc51706b19be20dffeb0adffc962de01f19310a81d6ec85396ce5355f3.png",
+        "description": "Abstract pastel geometric background, perfect for banners, headers, or login split screen."
+      },
+      {
+        "category": "login_illustration",
+        "url": "https://static.prod-images.emergentagent.com/jobs/21395b92-ae79-4ad7-90c0-043acf4bb43b/images/35c32ebb239993bfeff5888d195fb537ce2c484c5b0bd4e82a1916e8c3798ae6.png",
+        "description": "Student organizing tasks illustration for the login page."
+      },
+      {
+        "category": "empty_state",
+        "url": "https://static.prod-images.emergentagent.com/jobs/21395b92-ae79-4ad7-90c0-043acf4bb43b/images/61d21cdc2c40064b1d18f3e45f1e37af81c645d81cc0f434f3bad152f270ec13.png",
+        "description": "Empty state clipboard illustration. Use when no entities are selected or no data exists in tables."
+      },
+      {
+        "category": "entity_cover_placeholder",
+        "url": "https://images.unsplash.com/photo-1769430886896-dc30842be5a3?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1NzR8MHwxfHNlYXJjaHwzfHxtb2Rlcm4lMjBzY2hvb2wlMjBhcmNoaXRlY3R1cmV8ZW58MHx8fHwxNzc1OTI2MTA3fDA&ixlib=rb-4.1.0&q=85",
+        "description": "Modern concrete building. Use as a default cover image for Entity Details if specific ones aren't available."
+      }
+    ],
+    "icons_library": "lucide-react"
+  },
+  "accessibility_and_testing": {
+    "testing_ids": "CRITICAL: All interactive elements MUST have a data-testid attribute. E.g., data-testid='login-submit-btn', data-testid='entity-select-btn', data-testid='upload-csv-input'.",
+    "contrast": "Ensure dark text (#1A1A1A or #2C2C2C) is always used over pastel backgrounds to pass APCA/WCAG contrast ratios.",
+    "hover_states": "Hover states must always change background hue AND deepen shadows to provide clear interactive feedback."
+  },
+  "installation_instructions": "npm install lucide-react recharts"
+}
